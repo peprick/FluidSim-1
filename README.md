@@ -93,4 +93,4 @@ FluidSim-1/
 
 ## License
 
-No license has been selected yet. Add one before distributing or accepting outside contributions.
+Distributed under the [Apache License 2.0](LICENSE).
