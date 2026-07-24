@@ -46,6 +46,15 @@ void parallelFor(std::size_t itemCount, Work&& work) {
 } // namespace
 
 FluidSimulation::FluidSimulation(sf::FloatRect bounds) : bounds_(bounds) {
+    const float h = settings_.smoothingRadius;
+    const float h5 = h * h * h * h * h;
+    const float h8 = h5 * h * h * h;
+    poly6Coefficient_ = 4.0F / (std::numbers::pi_v<float> * h8);
+    spikyGradientCoefficient_ = -30.0F / (std::numbers::pi_v<float> * h5);
+    viscosityLaplacianCoefficient_ = 20.0F / (std::numbers::pi_v<float> * h5);
+    gridColumns_ = static_cast<int>(std::ceil(bounds_.size.x / settings_.smoothingRadius));
+    gridRows_ = static_cast<int>(std::ceil(bounds_.size.y / settings_.smoothingRadius));
+    grid_.resize(static_cast<std::size_t>(gridColumns_ * gridRows_));
     reset();
 }
 
@@ -102,11 +111,10 @@ void FluidSimulation::applyMouseForce(sf::Vector2f point, sf::Vector2f direction
 }
 
 void FluidSimulation::rebuildGrid() {
-    grid_.clear();
-    grid_.reserve(particles_.size());
+    for (auto& cell : grid_) cell.clear();
     for (std::size_t i = 0; i < particles_.size(); ++i) {
         const auto cell = cellOf(particles_[i].position);
-        grid_[cellKey(cell.x, cell.y)].push_back(i);
+        grid_[cellIndex(cell.x, cell.y)].push_back(i);
     }
 }
 
@@ -226,13 +234,21 @@ void FluidSimulation::draw(sf::RenderTarget& target) const {
 void FluidSimulation::collectNeighbors(sf::Vector2f position, std::vector<std::size_t>& result) const {
     result.clear();
     const auto cell = cellOf(position);
-    for (int y = -1; y <= 1; ++y) for (int x = -1; x <= 1; ++x) {
-        if (const auto it = grid_.find(cellKey(cell.x + x, cell.y + y)); it != grid_.end()) result.insert(result.end(), it->second.begin(), it->second.end());
+    const int left = std::max(0, cell.x - 1), right = std::min(gridColumns_ - 1, cell.x + 1);
+    const int top = std::max(0, cell.y - 1), bottom = std::min(gridRows_ - 1, cell.y + 1);
+    for (int y = top; y <= bottom; ++y) for (int x = left; x <= right; ++x) {
+        const auto& candidates = grid_[cellIndex(x, y)];
+        result.insert(result.end(), candidates.begin(), candidates.end());
     }
 }
 
-long long FluidSimulation::cellKey(int x, int y) const { return (static_cast<long long>(x) << 32) ^ static_cast<unsigned int>(y); }
-sf::Vector2i FluidSimulation::cellOf(sf::Vector2f position) const { return {static_cast<int>(std::floor(position.x / settings_.smoothingRadius)), static_cast<int>(std::floor(position.y / settings_.smoothingRadius))}; }
-float FluidSimulation::poly6(float r2) const { const float h2 = settings_.smoothingRadius * settings_.smoothingRadius; if (r2 >= h2) return 0.0F; const float d = h2 - r2; return 4.0F * d * d * d / (std::numbers::pi_v<float> * std::pow(settings_.smoothingRadius, 8.0F)); }
-sf::Vector2f FluidSimulation::spikyGradient(sf::Vector2f displacement, float distance) const { const float d = settings_.smoothingRadius - distance; return normalize(displacement) * (-30.0F * d * d / (std::numbers::pi_v<float> * std::pow(settings_.smoothingRadius, 5.0F))); }
-float FluidSimulation::viscosityLaplacian(float distance) const { return 20.0F * (settings_.smoothingRadius - distance) / (std::numbers::pi_v<float> * std::pow(settings_.smoothingRadius, 5.0F)); }
+sf::Vector2i FluidSimulation::cellOf(sf::Vector2f position) const {
+    return {
+        std::clamp(static_cast<int>(std::floor((position.x - bounds_.position.x) / settings_.smoothingRadius)), 0, gridColumns_ - 1),
+        std::clamp(static_cast<int>(std::floor((position.y - bounds_.position.y) / settings_.smoothingRadius)), 0, gridRows_ - 1)
+    };
+}
+std::size_t FluidSimulation::cellIndex(int x, int y) const { return static_cast<std::size_t>(y * gridColumns_ + x); }
+float FluidSimulation::poly6(float r2) const { const float h2 = settings_.smoothingRadius * settings_.smoothingRadius; if (r2 >= h2) return 0.0F; const float d = h2 - r2; return poly6Coefficient_ * d * d * d; }
+sf::Vector2f FluidSimulation::spikyGradient(sf::Vector2f displacement, float distance) const { const float d = settings_.smoothingRadius - distance; return normalize(displacement) * (spikyGradientCoefficient_ * d * d); }
+float FluidSimulation::viscosityLaplacian(float distance) const { return viscosityLaplacianCoefficient_ * (settings_.smoothingRadius - distance); }
