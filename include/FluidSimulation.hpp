@@ -2,7 +2,6 @@
 
 #include <SFML/Graphics.hpp>
 #include <cstddef>
-#include <unordered_map>
 #include <vector>
 
 struct SimulationSettings {
@@ -47,7 +46,7 @@ public:
     [[nodiscard]] const std::vector<SolidBlock>& solidBlocks() const { return solidBlocks_; }
 
 private:
-    using Grid = std::unordered_map<long long, std::vector<std::size_t>>;
+    using Grid = std::vector<std::vector<std::size_t>>;
 
     void rebuildGrid();
     void computeDensityAndPressure();
@@ -55,8 +54,8 @@ private:
     void integrate(float deltaSeconds);
     void constrainToBounds(Particle& particle);
     void collectNeighbors(sf::Vector2f position, std::vector<std::size_t>& result) const;
-    [[nodiscard]] long long cellKey(int x, int y) const;
     [[nodiscard]] sf::Vector2i cellOf(sf::Vector2f position) const;
+    [[nodiscard]] std::size_t cellIndex(int x, int y) const;
     [[nodiscard]] float poly6(float distanceSquared) const;
     [[nodiscard]] sf::Vector2f spikyGradient(sf::Vector2f displacement, float distance) const;
     [[nodiscard]] float viscosityLaplacian(float distance) const;
@@ -66,6 +65,11 @@ private:
     std::vector<Particle> particles_;
     std::vector<SolidBlock> solidBlocks_;
     Grid grid_;
+    int gridColumns_ = 0;
+    int gridRows_ = 0;
+    float poly6Coefficient_ = 0.0F;
+    float spikyGradientCoefficient_ = 0.0F;
+    float viscosityLaplacianCoefficient_ = 0.0F;
     bool paused_ = false;
     static constexpr std::size_t MaxParticles = 6000;
 };
