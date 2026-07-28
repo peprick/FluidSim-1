@@ -35,7 +35,7 @@ For each particle, local density is estimated from nearby particles using the Po
 \rho_i = \sum_j m_j W_{poly6}(\lVert \mathbf{r}_i - \mathbf{r}_j \rVert, h)
 \]
 
-Pressure is calculated with a weakly-compressible equation of state:
+Pressure is calculated with a weakly compressible equation of state:
 
 \[
 p_i = k\max(0, \rho_i - \rho_0)
