@@ -11,7 +11,7 @@ An interactive 2D fluid-particle sandbox written in **C++20** with **SFML 3**. I
 - Uniform spatial hashing for efficient local neighbor searches
 - Batched GPU rendering: all particles render in a single draw call
 - CPU parallelism for large scenes
-- Automatic removal of settled floor particles to preserve performance
+- Automatic removal of settled floor  particles to preserve performance
 
 ## Controls
 
