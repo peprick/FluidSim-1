@@ -13,6 +13,10 @@ An interactive 2D fluid-particle sandbox written in **C++20** with **SFML 3**. I
 - CPU parallelism for large scenes
 - Automatic removal of settled floor  particles to preserve performance
 
+## Interface
+
+The application has a live dashboard showing active particles, gravity, viscosity, and smoothed FPS. The tank includes a subtle grid for spatial reference, and the cursor previews the exact fluid block that will be spawned. The UI uses the standard macOS Arial font when it is available; the simulation remains fully functional without it.
+
 ## Controls
 
 | Input | Action |
