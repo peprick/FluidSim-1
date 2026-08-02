@@ -4,7 +4,7 @@ An interactive 2D fluid-particle sandbox written in **C++20** with **SFML 3**. I
 
 ## Features
 
-- SPH-based fluid motion with physically motivated density, pressure, and viscosity forces
+- SPH based fluid motion with physically motivated density, pressure, and viscosity forces
 - Interactive fluid injection with a resizable particle brush
 - Random floating solid platforms with particle collision response
 - Adjustable gravity and viscosity while the simulation runs
